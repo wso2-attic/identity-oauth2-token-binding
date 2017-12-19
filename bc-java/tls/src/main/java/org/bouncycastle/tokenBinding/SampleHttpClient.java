@@ -38,12 +38,20 @@ import static org.bouncycastle.tokenBinding.TBUtil.writeOpaque8;
 import static org.bouncycastle.tokenBinding.TBUtil.writeUint16;
 import static org.bouncycastle.tokenBinding.TBUtil.writeUint8;
 
+/**
+ * This is a simple http client to test token binding
+ */
 public class SampleHttpClient {
     private KeyPair providedKeypair;
     private KeyPair referredKeypair;
 
     public static void main(String args[]) throws Exception {
         SampleHttpClient sampleHttpClient = new SampleHttpClient();
+        String client_id = "b9WotKTjVk988BSpEhSWNB7BxN8a";
+        String client_secret = "kQY8rAqj8sDGPqYL4EFvQA78cpsa";
+        String host = "wso2.is.com";
+        int port = 443;
+
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
@@ -73,7 +81,8 @@ public class SampleHttpClient {
 
         ProvSSLSocketFactory factt = (ProvSSLSocketFactory) clientContext.getSocketFactory();
 
-        SSLSocket socket = (SSLSocket) factt.createSocket("wso2.is.com", 443);
+
+        SSLSocket socket = (SSLSocket) factt.createSocket(host, port);
 
         socket.startHandshake();
 
@@ -89,9 +98,8 @@ public class SampleHttpClient {
         String data1 = URLEncoder.encode("grant_type", "UTF-8") + "=" + URLEncoder.encode("password", "UTF-8");
         String data2 = URLEncoder.encode("username", "UTF-8") + "=" + URLEncoder.encode("admin", "UTF-8");
         String data3 = URLEncoder.encode("password", "UTF-8") + "=" + URLEncoder.encode("admin", "UTF-8");
-        String data4 = URLEncoder.encode("client_id", "UTF-8") + "=" + URLEncoder.encode("b9WotKTjVk988BSpEhSWNB7BxN8a", "UTF-8");
-        String data5 = URLEncoder.encode("client_secret", "UTF-8") + "=" + URLEncoder.encode("kQY8rAqj8sDGPqYL4EFvQA78cpsa", "UTF-8");
-
+        String data4 = URLEncoder.encode("client_id", "UTF-8") + "=" + URLEncoder.encode(client_id, "UTF-8");
+        String data5 = URLEncoder.encode("client_secret", "UTF-8") + "=" + URLEncoder.encode(client_secret, "UTF-8");
 
         String data = data1 + "&" + data2 + "&" + data3 + "&" + data4 + "&" + data5;
 
@@ -143,7 +151,7 @@ public class SampleHttpClient {
     }
 
     public ByteArrayOutputStream createTokenBindingStructure(NegotiatedTokenBinding negotiatedTokenBinding, int type,
-                                                       KeyPair keyPair)
+                                                             KeyPair keyPair)
             throws Exception {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         writeUint8(type, buf);
@@ -162,7 +170,7 @@ public class SampleHttpClient {
         return buf;
     }
 
-     public byte[] createTokenBindingMessage(NegotiatedTokenBinding negotiatedTokenBinding) throws Exception {
+    public byte[] createTokenBindingMessage(NegotiatedTokenBinding negotiatedTokenBinding) throws Exception {
         ByteArrayOutputStream provideTB = createTokenBindingStructure(negotiatedTokenBinding, 0, providedKeypair);
         ByteArrayOutputStream referredTB = createTokenBindingStructure(negotiatedTokenBinding, 1, referredKeypair);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -181,7 +189,7 @@ public class SampleHttpClient {
         return out.toByteArray();
     }
 
-    public  KeyPair createKeypair() throws NoSuchProviderException, NoSuchAlgorithmException {
+    public KeyPair createKeypair() throws NoSuchProviderException, NoSuchAlgorithmException {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", "BC");
@@ -190,7 +198,7 @@ public class SampleHttpClient {
 
     }
 
-    public  byte[] signMessage(byte[] message, KeyPair keyPair) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+    public byte[] signMessage(byte[] message, KeyPair keyPair) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         Signature signature = Signature.getInstance("SHA256withRSA", "BC");
         signature.initSign(keyPair.getPrivate());
         signature.update(message);
@@ -199,13 +207,13 @@ public class SampleHttpClient {
 
     public NegotiatedTokenBinding getTokenbinding(SSLContext sslContext) throws Exception {
         Enumeration<byte[]> e = sslContext.getClientSessionContext().getIds();
-        NegotiatedTokenBinding s= null;
+        NegotiatedTokenBinding s = null;
         while (e.hasMoreElements()) {
             byte[] b = e.nextElement();
             System.out.println("session id: " + DatatypeConverter.printHexBinary(b).toLowerCase());
             ProvSSLSessionImpl Session = (ProvSSLSessionImpl) sslContext.getClientSessionContext().getSession(b);
-            TlsSessionImpl tlsSession = (TlsSessionImpl)Session.getTlsSession();
-            s=tlsSession.exportSessionParameters().getNegotiatedTokenBinding();
+            TlsSessionImpl tlsSession = (TlsSessionImpl) Session.getTlsSession();
+            s = tlsSession.exportSessionParameters().getNegotiatedTokenBinding();
         }
         return s;
     }

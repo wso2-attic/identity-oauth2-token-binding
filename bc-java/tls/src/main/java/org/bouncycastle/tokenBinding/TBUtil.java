@@ -4,6 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * This class contains methods to read and write data
+ */
 public class TBUtil {
 
     public static boolean isValidUint16(int i)
